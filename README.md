@@ -1,4 +1,4 @@
-# booksusi
+# booksi
 
 # add ssh
 
