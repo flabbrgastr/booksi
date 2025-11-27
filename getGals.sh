@@ -178,7 +178,7 @@ cd ./data/
 #echo tar $datum/ to datum.tar.gz
 tar -zcf $datum.tar.gz $datum/
 
-if [[ "$*" != *"-f"* ]]; then # if not local storage
+if [[ "$*" != *"-f"* ]] && [[ "$*" != *"-l"* ]]; then # if not folder or local mode
    rm -rf $datum/             # delete folder to save space on local storage
 fi
 
