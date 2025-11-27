@@ -7,7 +7,7 @@ show_help() {
     echo "  -h        Display this help information"
     echo "  -i        Include images"
     echo "  -a        a only"
-    echo "  -l        local storage, default is rsync"
+    echo "  -r        remote storage, default is local"
     echo "  -f        folder, default is tar.gz"
     # Add more options and their descriptions as needed
 }
@@ -185,7 +185,7 @@ fi
 if [ "$Testing" != 0 ]; then
   echo "testmode"
 else
-   if [[ "$*" != *"-l"* ]]; then
+   if [[ "$*" == *"-r"* ]]; then
       echo "rcloning to gdrive"
       rclone  copy $datum.tar.gz fgdrive:/
       cd ..
@@ -193,4 +193,3 @@ else
 fi
 echo "finished, enjoy!"
 exit 0
-
