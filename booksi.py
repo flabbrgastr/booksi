@@ -103,6 +103,7 @@ html_file = lastdir + "/gen/" + "all.html"
 with open(html_file, "w") as hfile:
     hfile.write(html_table)
 shutil.copy2(lastdir + "/gen/" + "all.html", "./all.html", follow_symlinks=True)
-print("     all.html")
+shutil.copy2(lastdir + "/gen/" + "all.html", "/var/www/booksi/all.html", follow_symlinks=True)
+print("     all.html -> ./all.html, /var/www/booksi/all.html")
 # all.html is the file that is used by the webserver
 exit(0)
