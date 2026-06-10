@@ -1,0 +1,19 @@
+[project]
+name = "booksi"
+version = "0.1.0"
+description = "Web scraping and data processing tool for adult entertainment listings"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "flabbrgastr" },
+]
+dependencies = [
+    "beautifulsoup4>=4",
+    "pandas>=2",
+    "tqdm>=4",
+    "wcwidth>=0.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

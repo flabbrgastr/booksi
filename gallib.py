@@ -403,7 +403,13 @@ def dups(df, columnid=""):
 
 def get_top_10_rows(top_10_rows, amount=10, Top=True, title="", print_top_10_rows=True):
     top_10_rows = top_10_rows.fillna("")  # Replace NaN values with empty string
-    top_10_rows["Fans"] = top_10_rows["Fans"].astype(int)
+    top_10_rows["Fans"] = (
+        top_10_rows["Fans"]
+        .astype(str)
+        .str.replace(r"\u202f|\xa0|\s", "", regex=True)
+        .replace("", "0")
+        .astype(int)
+    )
     top_10_rows = (
         top_10_rows[["Girl", "Strasse", "Fans", "a1", "a0", "cim", "cof"]]
         .sort_values("Fans", ascending=not Top)

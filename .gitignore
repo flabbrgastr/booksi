@@ -2,3 +2,6 @@ __*
 ..gitignore*
 data/
 .pi/
+.venv/
+*.egg-info/
+__pycache__/

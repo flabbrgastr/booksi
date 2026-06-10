@@ -18,9 +18,9 @@ git clone git@github.com:flabbrgastr/booksusi.git
 cd booksusi
 ```
 
-2. Install dependencies:
+2. Install dependencies with uv:
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 3. Configure scraping settings in `gals.conf`
@@ -30,34 +30,34 @@ pip install -r requirements.txt
 ### Web Scraping
 ```bash
 # Basic scraping
-python pyGals.py
+uv run python pyGals.py
 
 # With options
-python pyGals.py -i    # Include images
-python pyGals.py -a    # Anal only filtering
-python pyGals.py -t    # Test mode (limits to 10 items)
-python pyGals.py -l    # Local tar storage
-python pyGals.py -f    # Local folder storage
+uv run python pyGals.py -i    # Include images
+uv run python pyGals.py -a    # Anal only filtering
+uv run python pyGals.py -t    # Test mode (limits to 10 items)
+uv run python pyGals.py -l    # Local tar storage
+uv run python pyGals.py -f    # Local folder storage
 ```
 
 ### Data Processing
 ```bash
 # Process HTML data and generate outputs
-python booksi.py
+uv run python booksi.py
 
 # With options
-python booksi.py -v     # Verbose output
-python booksi.py -ci    # Use CSV import instead of HTML analysis
-python booksi.py -s     # Show statistics
+uv run python booksi.py -v     # Verbose output
+uv run python booksi.py -ci    # Use CSV import instead of HTML analysis
+uv run python booksi.py -s     # Show statistics
 ```
 
 ### Testing
 ```bash
 # Run test suite
-python booksi.test.py
+uv run python booksi.test.py
 
 # Test individual functions
-python -c "import gallib as gl; print(gl.prune_items('./data', test_mode=True))"
+uv run python -c "import gallib as gl; print(gl.prune_items('./data', test_mode=True))"
 ```
 
 ## Configuration

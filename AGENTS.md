@@ -345,17 +345,14 @@ docs: update AGENTS.md guidelines
 
 ### Development Environment
 ```bash
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or
-venv\Scripts\activate  # Windows
-
-# Install dependencies
-pip install -r requirements.txt
+# Create virtual environment and install dependencies
+uv sync
+source .venv/bin/activate
 
 # Run in development mode
 python booksi.py -v -s
+# Or without activating the venv:
+uv run python booksi.py -v -s
 ```
 
 ### Production Considerations
