@@ -5,3 +5,4 @@ data/
 .venv/
 *.egg-info/
 __pycache__/
+data/update.log
