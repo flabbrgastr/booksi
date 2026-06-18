@@ -347,7 +347,7 @@ def dfComprehend(dfnew):
     ]
     #    dfnew = dfnew[dfnew["Girl"].str.contains(pattern)==False]
     #    dfnew = dfnew[dfnew["Short"].str.contains(pattern)==False]
-    dfnew = dfnew.groupby(["Girl", "Tel"], as_index=False).max()
+    dfnew = dfnew.groupby(["Girl", "Tel", "sid"], as_index=False).max()
     newnum = len(dfnew.index)
     percentage = (oldnum - len(dfnew.index)) / oldnum * 100
     print(f"{newnum} -{percentage:.0f}%")
