@@ -45,3 +45,14 @@ nginx + systemd configs not versioned, no docker-compose/ansible, no health chec
 - `vote.py` — new voting server
 - `votes.db` — SQLite for votes
 - `all.html` — regenerated
+
+---
+
+## 2026-06-18 (follow-up)
+
+### 9. Price info in table
+- Profile pages often have prices (e.g., "30min 80€ / 60min 120€" for Leila)
+- Would be valuable in the HTML table
+- Currently not scraped — would require profile page requests
+- **If available conveniently** (e.g., in category listing JSON or meta tags), add column
+- Otherwise skip for now (same speed tradeoff)
