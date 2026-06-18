@@ -5,6 +5,35 @@ import re
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
+# Price extraction patterns (ordered by specificity)
+_PRICE_PATTERNS = [
+    # "15 Minuten 40 € / 30 Minuten 60 € / 60 Minuten 100 €" — extract hourly
+    r'(\d+)\s*(?:€|Euro)\s*/\s*(?:Std\.?|Stunde|h|hour)',
+    r'(?:Std\.?|Stunde|h|hour|1\s*h)\s*(?:pro|nur)?\s*(\d+)\s*(?:€|Euro)',
+    # "100€ / Stunde"
+    r'(\d+)\s*(?:€|Euro)\s*/\s*(?:Std\.?|Stunde|h)',
+    # "Stunde nur 100€", "STUNDE 100€"
+    r'Stunde\s*(?:nur)?\s*(\d+)\s*(?:€|Euro)',
+    # "1h 100€"
+    r'1\s*h[a-z]*[\s:]+\d+\s*€',
+    # "200 € 1 Std."
+    r'(\d+)\s*(?:€|Euro)\s+\d+\s*(?:Std\.?|Stunde|h)',
+    # fallback: extract any number+€ that seems hourly
+    r'(\d+)\s*(?:€|Euro)',
+]
+
+
+def extract_price(text):
+    """Extract a price string from a gal's short description."""
+    if not isinstance(text, str) or not text.strip():
+        return ""
+    for pattern in _PRICE_PATTERNS:
+        m = re.search(pattern, text)
+        if m:
+            val = m.group(1) if m.lastindex else m.group(0)
+            return f"{val}€"
+    return ""
+
 
 def ex_names(dir_path):
     """Extract base names from HTML files in dir (e.g., 'vivien' from 'vivien1.html')."""
@@ -152,6 +181,7 @@ def _parse_girl(girl, a1, a0, cim, cof):
         "Fans": fancount,
         "Score": score,
         "Short": short,
+        "Preis": extract_price(short),
         "Tel": tel,
         "Gurl": gurl,
         "Purl": purl,

@@ -60,7 +60,8 @@ def convert_dataframe_to_html(df):
 
     # Column order
     new_column_order = [
-        "Img", "Girl", "Loc", "Score", "Fans", "a1", "a0", "cof", "cim",
+        "Img", "Girl", "Loc", "Score", "Preis", "Fans",
+        "a1", "a0", "cof", "cim",
         "Short", "Location", "Tel", "t",
     ]
     df = df[new_column_order]
