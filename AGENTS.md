@@ -7,7 +7,7 @@ This file contains guidelines and commands for agentic coding agents working in 
 booksi is a Python-based web scraping and data processing tool that extracts, processes, and analyzes adult entertainment listings from websites. The main components include:
 
 - **booksi.py**: Main entry point for data processing pipeline
-- **gallib.py**: Core library with HTML parsing, data manipulation, and utility functions
+- **booksi/**: Core library package (parse, normalize, storage, render, pipeline)
 - **pyGals.py**: Web scraping script using wget for data collection
 - **booksi.test.py**: Test suite for validation
 
@@ -45,7 +45,7 @@ python booksi.test.py
 python -v booksi.test.py
 
 # Test individual functions (example pattern)
-python -c "import gallib as gl; print(gl.prune_items('./data', test_mode=True))"
+python -c "from booksi.storage import prune_items; print(prune_items('./data', test_mode=True))"
 ```
 
 ### Dependencies
@@ -78,7 +78,10 @@ from tqdm import tqdm
 import wcwidth
 
 # Local imports last
-import gallib as gl
+from booksi.storage import prune_items, matchdir
+from booksi.parse import get_gals, cat_files, ex_names
+from booksi.normalize import dfComprehend
+from booksi.render import convert_dataframe_to_html
 ```
 
 ### Naming Conventions
@@ -86,7 +89,7 @@ import gallib as gl
 - **Variables**: snake_case (e.g., `dir_path`, `lastdir`, `pdall`)
 - **Constants**: UPPER_SNAKE_CASE (e.g., `TEST_MODE`, `DEFAULT_PATH`)
 - **Classes**: PascalCase (rare in this codebase)
-- **File names**: snake_case for Python files (e.g., `booksi.py`, `gallib.py`)
+- **File names**: snake_case for Python files (e.g., `booksi.py`, `booksi/pipeline.py`)
 
 ### Type Hints
 The codebase doesn't use type hints consistently, but when adding new code:
@@ -235,7 +238,7 @@ progress_bar = tqdm(total=len(items), desc=desc, bar_format="{l_bar}", ncols=80)
 ```python
 # booksi.test.py
 import os
-import gallib as gl
+from booksi.storage import matchdir
 import pandas as pd
 
 def test_function_name():
@@ -253,7 +256,7 @@ def test_data_processing_pipeline():
 ### Running Single Tests
 ```bash
 # Test specific function
-python -c "import gallib as gl; result = gl.prune_items('./data', test_mode=True); print(result)"
+python -c "from booksi.storage import prune_items; print(prune_items('./data', test_mode=True))"
 
 # Test with sample data
 python -c "import pandas as pd; df = pd.read_csv('sample.csv'); print(df.head())"
@@ -332,7 +335,7 @@ def clean_string(text):
 feat: add new data processing feature
 fix: resolve HTML parsing issue
 refactor: optimize DataFrame operations
-test: add unit tests for gallib functions
+test: add unit tests for booksi/ modules
 docs: update AGENTS.md guidelines
 ```
 

@@ -57,7 +57,7 @@ uv run python booksi.py -s     # Show statistics
 uv run python booksi.test.py
 
 # Test individual functions
-uv run python -c "import gallib as gl; print(gl.prune_items('./data', test_mode=True))"
+uv run python -c "from booksi.storage import prune_items; print(prune_items('./data', test_mode=True))"
 ```
 
 ## Configuration

@@ -1,6 +1,6 @@
 import os
-import gallib as gl
 import pandas as pd
+from booksi.storage import matchdir
 
 def newsidlist(old_folder, new_folder):
     # Get the paths to the old and new CSV files
@@ -19,8 +19,8 @@ def newsidlist(old_folder, new_folder):
 
 # Specify the paths to the old and new folders
 path = './data'
-new_folder, delta0 = gl.matchdir('./data', 0)
-old_folder, delta1 = gl.matchdir('./data', 1)
+new_folder, delta0 = matchdir('./data', 0)
+old_folder, delta1 = matchdir('./data', 1)
 new_folder = path +'/'+new_folder
 old_folder = path +'/'+old_folder
 

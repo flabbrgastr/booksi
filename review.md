@@ -11,9 +11,9 @@ Current approach: **Fast category scraping** (4 listing pages) vs profile-by-pro
 - **Root cause:** Site category listings are upsell/noisy; profile page is ground truth
 - **Tradeoff:** 4 requests vs 342× profile requests (~20 min vs ~5 sec)
 
-### 2. gallib.py monolith (700+ lines)
-Mixes: parsing, pandas ops, file I/O, HTML generation, stats, delta comparison.
-Should split: `scrape/`, `parse/`, `normalize/`, `storage/`, `render/`, `vote/`
+### 2. Pre-refactor monolith (gallib.py was 700+ lines)
+Mixed: parsing, pandas ops, file I/O, HTML generation, stats, delta comparison.
+Split into: `booksi/parse.py`, `booksi/normalize.py`, `booksi/storage.py`, `booksi/render.py`, `booksi/pipeline.py`
 
 ### 3. Merge logic lossy
 `dfComprehend` groups by `(Girl, Tel, sid)` and takes `.max()` — flags OR together correctly for same gal, but would merge different gals sharing name+tel (rare, fixed by adding `sid`).
@@ -22,7 +22,7 @@ Should split: `scrape/`, `parse/`, `normalize/`, `storage/`, `render/`, `vote/`
 Rich data (prices, availability, reviews, full service list) unused.
 
 ### 5. Bash + Python hybrid fragile
-`getGals.sh` (wget, tar, rclone) + `gallib.py` (parse, merge, render). Should unify in Python with `httpx`/`aiohttp`.
+`getGals.sh` (wget, tar, rclone) + `booksi/` Python modules. Should unify scraping in Python with `httpx`/`aiohttp`.
 
 ### 6. Vote server (`vote.py`) issues
 - Cache invalidation only on file mtime (misses DB changes)
@@ -41,7 +41,7 @@ nginx + systemd configs not versioned, no docker-compose/ansible, no health chec
 **Kept current fast-scrape architecture.** Category flags are "good enough" signals for filtering. Profile scraping would add 300+ HTTP requests per run — not worth it for the voting use case.
 
 ## Files Changed This Session
-- `gallib.py:346` — groupby now includes `sid` (fixes Vivien merge bug)
+- `booksi/normalize.py` — groupby now includes `sid` (fixes Vivien merge bug)
 - `vote.py` — new voting server
 - `votes.db` — SQLite for votes
 - `all.html` — regenerated
