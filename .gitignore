@@ -6,3 +6,4 @@ data/
 *.egg-info/
 __pycache__/
 data/update.log
+all.html
