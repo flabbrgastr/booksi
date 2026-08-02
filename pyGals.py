@@ -1,141 +1,202 @@
+#!/usr/bin/env python3
+"""pyGals — scrape listing pages from booksusi.com using wget."""
+
+import argparse
+import configparser
 import os
+import re
 import shutil
 import subprocess
 import sys
+import time
+from datetime import datetime
+from pathlib import Path
 
-# Function to display help information
-def show_help():
-    print("Usage: getGals [options]")
-    print("Options:")
-    print("  -h        Display this help information")
-    print("  -i        Include images")
-    print("  -a        a only")
-    print("  -l        local tar storage")
-    print("  -f        local folder storage")
-    # Add more options and their descriptions as needed
+from rename import rename_jpgs
 
-# Check for the --help or -h argument
-if "-h" in sys.argv or "--h" in sys.argv:
-    show_help()
-    sys.exit(0)
 
-# Read options from config file into a dictionary
-variables = {}
-variables_section = False
-with open("gals.conf", "r") as config_file:
-    for line in config_file:
-        line = line.strip()
-        if line == "[variables]":
-            variables_section = True
-            continue
-        if variables_section:
-            if line.startswith("#") or not line:
-                continue
-            key, value = map(str.strip, line.split("=", 1))
+def load_config(config_path="gals.conf"):
+    """Parse gals.conf into categories list and variables dict."""
+    parser = configparser.ConfigParser()
+    parser.read(config_path)
+
+    categories = []
+    if parser.has_section("htmls"):
+        # ConfigParser lowercases keys, but these are bare names (no = sign).
+        # Read the raw file to get them.
+        with open(config_path) as f:
+            in_htmls = False
+            for line in f:
+                line = line.strip()
+                if line == "[htmls]":
+                    in_htmls = True
+                    continue
+                if line.startswith("[") and in_htmls:
+                    break
+                if in_htmls and line and not line.startswith("#"):
+                    categories.append(line)
+
+    variables = {}
+    if parser.has_section("variables"):
+        for key, value in parser.items("variables"):
             variables[key] = value
 
-# Testmode
-if "-t" in sys.argv:
-    print("Testmode")
-    Testing = 10
-    # Print the variables
-    for key, value in variables.items():
-        print(f"{key}={value}")
-else:
-    Testing = 0
+    return categories, variables
 
-user = os.getlogin()
 
-# wget args
-arg1 = "-e robots=off"
-arg2 = "-q -k -K --adjust-extension"
-arg3 = "-U mozilla"
-if "-i" in sys.argv:
-    arg4 = f"-nH -nd -p -H {variables.get('arg4i', '')}"
-    print("include images")
-else:
-    arg4 = "-nH -nd"
-arg5 = "--convert-links --random-wait"
-args = f"{arg1} {arg2} {arg3} {arg4} {arg5}"
+def build_wget_args(variables, include_images=False):
+    """Build wget argument list from config."""
+    args = [
+        "-e", "robots=off",
+        "-q", "-k", "-K", "--adjust-extension",
+        "-U", "mozilla",
+        "-nH", "-nd",
+    ]
+    if include_images:
+        domain = variables.get("arg4i", "")
+        args += ["-p", "-H", domain]
+    args += ["--convert-links", "--random-wait"]
+    return args
 
-# Check for the -a argument
-if "-a" in sys.argv:
-    # anal only
-    keyword = "an"
-    filtered_arr = [option for option in html1arr if keyword in option]
-    # Update html1arr with filtered_arr values
-    html1arr = filtered_arr
 
-GalsinPage = int(variables.get("GalsinPage", "0"))
-html0 = variables.get("html0", "")
-html2 = variables.get("html2", "")
-datum = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
-out_dir = f"./data/{datum}"
-arg_out = f"-P{out_dir}"
+def strip_to_body(filepath):
+    """Rewrite HTML file keeping only content between <body> and </body>."""
+    with open(filepath, "r") as f:
+        content = f.read()
+    match = re.search(r"(<body>.*?</body>)", content, re.DOTALL)
+    if match:
+        with open(filepath, "w") as f:
+            f.write(match.group(1))
 
-print(f"Getting Gals on {datum}")
-print(html1arr)
-print("")
 
-for i in html1arr:
-    print(i, end=" ")
-    x = 1
-    sumGals = 0
-    Gals = GalsinPage
-    while Gals >= GalsinPage:
-        subprocess.run(["wget", args, arg_out, f"{html0}{i}{html2}{x}"])
-        file = f"{out_dir}/{i}{x}.html"
-        shutil.move(f"{out_dir}/index*{x}.html", file)
-        with open(file, "r+") as f:
-            lines = f.readlines()
-            f.seek(0)
-            for line in lines:
-                if "<body>" in line:
-                    f.write(line)
-                elif "</body>" in line:
-                    f.write(line)
-                    break
-            f.truncate()
-        Gals = sum(1 for _ in re.finditer(r"\blisting\b", open(file).read()))
-        Gals -= Testing
-        sumGals += Gals
-        print(".", end="")
-        x += 1
+def count_listings(filepath):
+    """Count 'listing' occurrences in an HTML file."""
+    try:
+        with open(filepath, "r") as f:
+            return f.read().count("listing")
+    except (OSError, UnicodeDecodeError):
+        return 0
 
-    print(sumGals)
 
-print("cleaning up")
-os.chdir(out_dir)
-subprocess.run(["rm", "*.orig", "*.svg", "*.css", "*.css?*", "*.js?*", "*.jpg", "*.png", "*.[0-9]", "*.[0-9][0-9]"], stderr=subprocess.DEVNULL)
-os.chdir("../..")
+def fetch_category(category, out_dir, wget_args, gals_per_page, test_limit=0):
+    """Fetch all pages for one category. Returns total listings found."""
+    base_url = variables["html0"]
+    page_url = variables["html2"]
+    page = 1
+    total = 0
+    listings = gals_per_page  # start loop
 
-# Delete all directories and files older than N days
-N = int(variables.get("N", "0"))
-for root, dirs, files in os.walk("./data/"):
-    for name in dirs:
-        path = os.path.join(root, name)
-        ctime = os.path.getctime(path)
-        if (time.time() - ctime) // (24 * 3600) > N:
-            shutil.rmtree(path)
+    while listings >= gals_per_page:
+        url = f"{base_url}{category}{page_url}{page}"
+        subprocess.run(["wget"] + wget_args + [f"-P{out_dir}", url])
 
-# python booksi_a_42.py d
+        # wget saves as indexN.html — rename to categoryN.html
+        src = out_dir / f"index{page}.html"
+        dst = out_dir / f"{category}{page}.html"
+        if src.exists():
+            src.rename(dst)
+        else:
+            # wget may have saved with query string — find it
+            for f in out_dir.glob(f"index*{page}.html*"):
+                f.rename(dst)
+                break
 
-# Renaming images
-subprocess.run(["./renamejpgs.sh", out_dir])
-os.chdir("./data/")
-print(f"tar {datum}/ to {datum}.tar.gz")
-subprocess.run(["tar", "-zcf", f"{datum}.tar.gz", datum])
+        strip_to_body(dst)
+        listings = count_listings(dst) - test_limit
+        total += max(listings, 0)
+        print(".", end="", flush=True)
+        page += 1
 
-if "-f" not in sys.argv:  # if not local storage
-    shutil.rmtree(datum)  # delete folder to save space on local storage
+    return total
 
-if Testing != 0:
-    print("testmode")
-else:
-    if "-l" not in sys.argv:
-        print("rcloning to gdrive")
-        subprocess.run(["rclone", "copy", f"{datum}.tar.gz", "fgdrive:/"])
-        os.chdir("..")
 
-print("finished, enjoy!")
-sys.exit(0)
+def cleanup_downloads(out_dir):
+    """Remove non-HTML files from download directory."""
+    extensions = [
+        "*.orig", "*.svg", "*.css", "*.css?*", "*.js?*",
+        "*.jpg", "*.jpg?", "*.png", "*.[0-9]", "*.[0-9][0-9]",
+    ]
+    for pattern in extensions:
+        for f in out_dir.glob(pattern):
+            f.unlink(missing_ok=True)
+
+
+def prune_old_data(data_dir, max_age_days):
+    """Delete data directories older than max_age_days."""
+    if max_age_days <= 0:
+        return
+    now = time.time()
+    cutoff = max_age_days * 86400
+    for entry in data_dir.iterdir():
+        if entry.is_dir():
+            age = now - entry.stat().st_ctime
+            if age > cutoff:
+                shutil.rmtree(entry)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Scrape listing pages from booksusi.com")
+    parser.add_argument("-i", action="store_true", help="Include images")
+    parser.add_argument("-a", action="store_true", help="Anal categories only")
+    parser.add_argument("-l", action="store_true", help="Keep local tar storage")
+    parser.add_argument("-f", action="store_true", help="Keep local folder storage")
+    parser.add_argument("-t", action="store_true", help="Test mode (skip 10 listings per page)")
+    args = parser.parse_args()
+
+    global variables
+    categories, variables = load_config()
+    if not categories:
+        print("No categories found in gals.conf")
+        sys.exit(1)
+
+    test_limit = 10 if args.t else 0
+    gals_per_page = int(variables.get("GalsinPage", 23))
+    max_age_days = int(variables.get("N", 0))
+
+    if args.a:
+        categories = [c for c in categories if "an" in c]
+
+    data_dir = Path("./data")
+    data_dir.mkdir(exist_ok=True)
+
+    datum = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    out_dir = data_dir / datum
+    out_dir.mkdir()
+
+    wget_args = build_wget_args(variables, include_images=args.i)
+    if args.i:
+        print("Include images")
+
+    print(f"Getting Gals on {datum}")
+    print(categories)
+    print()
+
+    for cat in categories:
+        print(cat, end=" ")
+        total = fetch_category(cat, out_dir, wget_args, gals_per_page, test_limit)
+        print(total)
+
+    print("Cleaning up...")
+    cleanup_downloads(out_dir)
+    rename_jpgs(str(out_dir))
+
+    prune_old_data(data_dir, max_age_days)
+
+    # Tar and optionally upload
+    tar_path = data_dir / f"{datum}.tar.gz"
+    subprocess.run(["tar", "-zcf", str(tar_path), str(out_dir)])
+
+    if not args.f:
+        shutil.rmtree(out_dir)
+
+    if args.t:
+        print("Testmode — skipping upload")
+    elif not args.l:
+        print("Uploading to gdrive...")
+        subprocess.run(["rclone", "copy", str(tar_path), "fgdrive:/"])
+
+    print("Finished!")
+
+
+if __name__ == "__main__":
+    main()
