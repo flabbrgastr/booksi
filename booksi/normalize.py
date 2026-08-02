@@ -6,6 +6,9 @@ import pandas as pd
 
 def dfComprehend(dfnew):
     """Dedupe and filter DataFrame."""
+    if dfnew.empty:
+        return dfnew
+
     pattern = r"trans|^ts |^Ts_|real.*doll|doll.*real"
     pattern = re.compile(pattern, re.IGNORECASE)
 

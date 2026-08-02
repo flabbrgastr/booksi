@@ -26,14 +26,22 @@ _PRICE_PATTERNS = [
 
 
 def extract_price(text):
-    """Extract a price string from a gal's short description."""
+    """Extract a price string from a gal's short description.
+
+    Returns the highest price found (e.g. '100€' from '40€ / 60€ / 100€').
+    """
     if not isinstance(text, str) or not text.strip():
         return ""
+    prices = []
     for pattern in _PRICE_PATTERNS:
-        m = re.search(pattern, text)
-        if m:
+        for m in re.finditer(pattern, text):
             val = m.group(1) if m.lastindex else m.group(0)
-            return f"{val}€"
+            try:
+                prices.append(int(val))
+            except ValueError:
+                pass
+    if prices:
+        return f"{max(prices)}€"
     return ""
 
 

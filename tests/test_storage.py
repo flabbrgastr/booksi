@@ -90,12 +90,12 @@ class TestPruneItems:
         today = datetime.now().strftime("%Y-%m-%d")
         (data_dir / f"{today}_010000").mkdir()
         (data_dir / f"{today}_020000").mkdir()
+        (data_dir / f"{today}_030000").mkdir()
         pruned = prune_items(str(data_dir), test_mode=True)
-        # test_mode doesn't increment counter (BUG: returns 0)
-        assert pruned == 0
-        # But dirs still exist
+        # 3 dirs same date → 2 pruned (keeps newest), but none deleted
+        assert pruned == 2
         remaining = [d for d in data_dir.iterdir() if d.is_dir()]
-        assert len(remaining) == 2
+        assert len(remaining) == 3
 
     def test_prune_nothing_when_one(self, data_dir):
         today = datetime.now().strftime("%Y-%m-%d")

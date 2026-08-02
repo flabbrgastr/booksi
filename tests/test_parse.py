@@ -9,13 +9,14 @@ from booksi.parse import extract_price, ex_names
 
 class TestExtractPrice:
     def test_hourly_price(self):
-        # BUG: regex matches first €, not the hourly one
-        # The pattern r'(\d+)\s*(?:€|Euro)\s*/\s*(?:Std\.?|...)' should match 100€
-        # but the simpler pattern r'(\d+)\s*(?:€|Euro)' matches 40€ first
-        assert extract_price("15 Minuten 40€ / 60 Minuten 100€") == "40€"
+        # Returns highest price found
+        assert extract_price("15 Minuten 40€ / 60 Minuten 100€") == "100€"
 
     def test_hourly_only(self):
         assert extract_price("100€ / Stunde") == "100€"
+
+    def test_returns_highest(self):
+        assert extract_price("80€ / 120€ / 200€") == "200€"
 
     def test_price_with_euro(self):
         assert extract_price("Stunde nur 150€") == "150€"

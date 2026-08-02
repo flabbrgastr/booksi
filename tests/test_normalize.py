@@ -1,7 +1,6 @@
 """Tests for booksi.normalize module."""
 
 import pandas as pd
-import pytest
 
 from booksi.normalize import dfComprehend
 
@@ -53,10 +52,9 @@ class TestDfComprehend:
         assert len(alice) == 1
 
     def test_empty_dataframe(self):
-        # BUG: dfComprehend divides by zero on empty input
         df = pd.DataFrame(columns=["Girl", "Tel", "sid", "Short", "a1", "a0", "cim", "cof"])
-        with pytest.raises(ZeroDivisionError):
-            dfComprehend(df)
+        result = dfComprehend(df)
+        assert len(result) == 0
 
     def test_filters_in_short(self):
         # Pattern is ^ts (starts with "ts"), not just contains "ts"

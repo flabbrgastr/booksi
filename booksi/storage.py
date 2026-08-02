@@ -41,7 +41,7 @@ def prune_items(path, test_mode=True):
                     print(f"Test mode: Would delete file {file}")
                 else:
                     os.remove(file)
-                    pruned_items += 1
+                pruned_items += 1
 
     for week, folders_by_date in folders_by_week.items():
         for date, folders in folders_by_date.items():
@@ -51,7 +51,7 @@ def prune_items(path, test_mode=True):
                     print(f"Test mode: Would delete folder {folder}")
                 else:
                     shutil.rmtree(folder)
-                    pruned_items += 1
+                pruned_items += 1
 
     return pruned_items
 

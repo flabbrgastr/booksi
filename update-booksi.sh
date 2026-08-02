@@ -12,7 +12,7 @@ echo "=== $(date) ===" >> "$LOG"
 
 # Step 1: scrape new data, keep folder (-f) so booksi.py can read it
 echo "  scraping..." >> "$LOG"
-./getGals.sh -f >> "$LOG" 2>&1
+uv run python pyGals.py -f >> "$LOG" 2>&1
 
 # Step 2: extract any tar.gz that doesn't have a directory yet
 # (fallback in case getGals.sh wasn't run with -f)
