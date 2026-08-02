@@ -139,13 +139,13 @@ INJECT_BODY = """
       '<button class="vbtn down" onclick="doVote(this,&#39;' + url + '&#39;,&#39;down&#39;)">&#9660;</button>' +
       '</span>';
     htd.parentNode.insertBefore(vtd, htd.nextSibling);
-    if(net<0) tr.style.display='none';
+    if(net<0) { tr.style.display='none'; tr.dataset.voteHidden='1'; }
   });
 
   document.getElementById('search').addEventListener('input', e => {
     const q = e.target.value.toLowerCase();
     document.querySelectorAll('tbody tr').forEach(tr => {
-      if (tr.style.display === 'none') return;
+      if (tr.dataset.voteHidden) return; // skip vote-hidden rows
       const text = tr.textContent.toLowerCase();
       tr.style.display = text.includes(q) ? '' : 'none';
     });
