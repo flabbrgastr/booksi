@@ -10,7 +10,7 @@ class TestConvertDataframeToHtml:
     def test_returns_html_string(self, sample_dataframe):
         result = convert_dataframe_to_html(sample_dataframe)
         assert isinstance(result, str)
-        assert "<html>" in result
+        assert "<html" in result
         assert "</html>" in result
 
     def test_contains_table(self, sample_dataframe):
@@ -39,8 +39,8 @@ class TestConvertDataframeToHtml:
 
     def test_checkmarks_replaced(self, sample_dataframe):
         result = convert_dataframe_to_html(sample_dataframe)
-        assert "🍑" in result  # a0 or a1 with ✓
-        assert "💦" in result  # cim or cof with ✓
+        assert "pill-peach" in result  # a0 or a1 with ✓
+        assert "pill-water" in result  # cim or cof with ✓
 
     def test_empty_dataframe(self):
         df = pd.DataFrame(columns=[
@@ -50,7 +50,7 @@ class TestConvertDataframeToHtml:
         ])
         result = convert_dataframe_to_html(df)
         assert "<table" in result
-        assert "Gals: 0" in result
+        assert "0 Gals" in result  # in <title>
 
     def test_t_column_shows_new_tag(self, sample_dataframe):
         sample_dataframe.loc[0, "t"] = "new1"
