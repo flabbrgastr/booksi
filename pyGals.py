@@ -12,6 +12,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from booksi.config import DATA_DIR
 from rename import rename_jpgs
 
 
@@ -156,7 +157,7 @@ def main():
     if args.a:
         categories = [c for c in categories if "an" in c]
 
-    data_dir = Path("./data")
+    data_dir = DATA_DIR
     data_dir.mkdir(exist_ok=True)
 
     datum = datetime.now().strftime("%Y-%m-%d_%H%M%S")

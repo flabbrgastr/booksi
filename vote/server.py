@@ -6,6 +6,7 @@ import re
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 
+from booksi.config import HTML_SRC, VOTE_DB
 from vote.models import (
     get_votes_dict, record_vote, sync_gals,
     ensure_shortlist, get_shortlists, get_shortlist_gals,
@@ -14,8 +15,7 @@ from vote.models import (
 from vote.injector import inject_votes
 from vote.pages import shortlist_page
 
-HTML_SRC = "/var/www/booksi/all.html"
-PORT = 8008
+PORT = int(os.environ.get("BOOKSI_VOTE_PORT", 8008))
 
 _html_cache = None
 _html_cache_mtime = 0
@@ -147,9 +147,9 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     from vote.models import init_db
 
-    conn = init_db(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "votes.db"))
-    added = sync_gals(conn, HTML_SRC)
-    print(f"DB: votes.db")
+    conn = init_db(str(VOTE_DB))
+    added = sync_gals(conn, str(HTML_SRC))
+    print(f"DB: {VOTE_DB}")
     if added:
         print(f"Synced {added} new gals")
     total = conn.execute("SELECT COUNT(*) FROM gals").fetchone()[0]

@@ -8,6 +8,8 @@ from datetime import datetime
 
 import pandas as pd
 
+from booksi.config import CSV_FILENAME, DATA_DIR
+
 
 def prune_items(path, test_mode=True):
     """Prune old data directories/files, keeping most recent per day/week."""
@@ -136,8 +138,10 @@ def _resolve_folder(folder, dir_path, default_delta=0):
         return csv, delta
 
 
-def newsidlist(old_folder, new_folder, column="sid", dir_path="./data", verbose=False):
+def newsidlist(old_folder, new_folder, column="sid", dir_path=None, verbose=False):
     """Find new sids in new_folder not present in old_folder."""
+    if dir_path is None:
+        dir_path = str(DATA_DIR)
     old_csv, deltaold = _resolve_folder(old_folder, dir_path)
     new_csv, deltanew = _resolve_folder(new_folder, dir_path)
 
@@ -161,8 +165,10 @@ def newsidlist(old_folder, new_folder, column="sid", dir_path="./data", verbose=
     return new_values
 
 
-def update_dataframe(old_folder, new_folder, dir_path="./data", verbose=False):
+def update_dataframe(old_folder, new_folder, dir_path=None, verbose=False):
     """Find sids where Tel, Strasse, or Girl changed between old and new."""
+    if dir_path is None:
+        dir_path = str(DATA_DIR)
     old_csv, deltaold = _resolve_folder(old_folder, dir_path)
     new_csv, deltanew = _resolve_folder(new_folder, dir_path)
 

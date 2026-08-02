@@ -12,7 +12,12 @@ if "-h" in sys.argv:
         -h  help
         -v  verbose
         -ci csv import instead of html analysis. Faster for testing.
-        -s show stats""")
+        -s show stats
+
+    Environment variables:
+        BOOKSI_DATA_DIR   Data directory (default: ./data)
+        BOOKSI_WEB_ROOT   Web root for all.html (default: /var/www/booksi)
+        BOOKSI_LOCAL_HTML Local copy of all.html (default: ./all.html)""")
     sys.exit()
 
 verbose = "-v" in sys.argv
@@ -20,7 +25,6 @@ csv_import = "-ci" in sys.argv
 show_stats = "-s" in sys.argv
 
 run_pipeline(
-    dir_path="./data",
     csv_import=csv_import,
     show_stats=show_stats,
     verbose=verbose,
