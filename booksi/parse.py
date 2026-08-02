@@ -5,6 +5,8 @@ import re
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
+from booksi.config import load_categories
+
 # Price extraction patterns (ordered by specificity)
 _PRICE_PATTERNS = [
     # "15 Minuten 40 € / 30 Minuten 60 € / 60 Minuten 100 €" — extract hourly
@@ -79,6 +81,16 @@ def cat_files(dir_path, name, remove=True):
     return concatenated_files
 
 
+def _get_category_flags(category_name):
+    """Look up flags for a category from gals.conf."""
+    categories = load_categories()
+    base = os.path.splitext(category_name)[0]
+    for cat in categories:
+        if cat["name"] == base:
+            return cat["flags"]
+    return {"a1": False, "a0": False, "cim": False, "cof": False}
+
+
 def get_gals(dir_path, category, test=False):
     """Parse a category HTML file and return list of gal dicts."""
     f = category
@@ -86,15 +98,11 @@ def get_gals(dir_path, category, test=False):
     if not fh:
         raise FileNotFoundError(f"Category file not found: {f}")
 
-    a0 = a1 = cim = cof = ""
-    if "analsex" in category:
-        a1 = "✓"
-    if "natur" in category:
-        a0 = "✓"
-    if "cum_in_mouth" in category:
-        cim = "✓"
-    if "cum_on_face" in category:
-        cof = "✓"
+    flags = _get_category_flags(category)
+    a1 = "✓" if flags["a1"] else ""
+    a0 = "✓" if flags["a0"] else ""
+    cim = "✓" if flags["cim"] else ""
+    cof = "✓" if flags["cof"] else ""
 
     page_soup = BeautifulSoup(fh, "html.parser")
     girls = page_soup.findAll(
