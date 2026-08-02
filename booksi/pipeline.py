@@ -31,18 +31,22 @@ def _parse_gals(dir_path, html_files, verbose=False):
     return pdall
 
 
-def _delta_tag(pdall, new_delta=5, old_delta=0, verbose=False):
-    """Tag new and updated sids across the last N days of data."""
-    new = new_delta
-    old = old_delta
+def _delta_tag(pdall, from_day=5, to_day=0, verbose=False):
+    """Tag new and updated sids across the last N days of data.
 
-    for old_idx in range(old, new, -1):
-        new_sids = newsidlist(old_idx, new, verbose=verbose)
-        changed_sids = update_dataframe(old_idx, new, verbose=verbose)
+    Args:
+        pdall: DataFrame to tag in-place.
+        from_day: Start comparing from this many days back (inclusive).
+        to_day: Stop comparing at this many days back (exclusive).
+                 E.g. from_day=5, to_day=0 compares days 5,4,3,2,1 vs today.
+    """
+    for day in range(from_day, to_day, -1):
+        new_sids = newsidlist(day, 0, verbose=verbose)
+        changed_sids = update_dataframe(day, 0, verbose=verbose)
         if verbose:
-            print(f"     New{old_idx} {len(new_sids)} : Upd{old_idx} {len(changed_sids)}")
-        pdall.loc[pdall["sid"].isin(new_sids), "t"] = f"new{old_idx}"
-        pdall.loc[pdall["sid"].isin(changed_sids), "t"] = f"upd{old_idx}"
+            print(f"     New{day} {len(new_sids)} : Upd{day} {len(changed_sids)}")
+        pdall.loc[pdall["sid"].isin(new_sids), "t"] = f"new{day}"
+        pdall.loc[pdall["sid"].isin(changed_sids), "t"] = f"upd{day}"
 
 
 def _write_outputs(pdall, lastdir, show_stats=False):
@@ -140,7 +144,7 @@ def run_pipeline(
         print("     all.csv")
 
     # Step 7: Delta comparison and tagging
-    _delta_tag(pdall, new_delta=0, old_delta=delta_range, verbose=verbose)
+    _delta_tag(pdall, from_day=delta_range, to_day=0, verbose=verbose)
 
     # Step 8: Write HTML outputs
     return _write_outputs(pdall, lastdir, show_stats=show_stats)
