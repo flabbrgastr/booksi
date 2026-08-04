@@ -2,45 +2,41 @@
 """pyGals — scrape listing pages from booksusi.com using wget."""
 
 import argparse
-import configparser
 import os
 import re
 import shutil
 import subprocess
 import sys
-import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
-from booksi.config import DATA_DIR
+from booksi.config import DATA_DIR, load_categories
 from rename import rename_jpgs
 
 
 def load_config(config_path="gals.conf"):
-    """Parse gals.conf into categories list and variables dict."""
-    parser = configparser.ConfigParser()
-    parser.read(config_path)
+    """Parse gals.conf into categories list and variables dict.
 
-    categories = []
-    if parser.has_section("htmls"):
-        # ConfigParser lowercases keys, but these are bare names (no = sign).
-        # Read the raw file to get them.
-        with open(config_path) as f:
-            in_htmls = False
-            for line in f:
-                line = line.strip()
-                if line == "[htmls]":
-                    in_htmls = True
-                    continue
-                if line.startswith("[") and in_htmls:
-                    break
-                if in_htmls and line and not line.startswith("#"):
-                    categories.append(line)
+    [htmls] lines are bare category names with flags (no '=' sign), so
+    configparser cannot parse the file as INI. Parse the raw file manually:
+    category names come from load_categories(), variables from the
+    [variables] section (key=value).
+    """
+    categories = [c["name"] for c in load_categories(config_path)]
 
     variables = {}
-    if parser.has_section("variables"):
-        for key, value in parser.items("variables"):
-            variables[key] = value
+    section = None
+    with open(config_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith("[") and line.endswith("]"):
+                section = line[1:-1]
+                continue
+            if section == "variables" and "=" in line:
+                key, value = map(str.strip, line.split("=", 1))
+                variables[key] = value
 
     return categories, variables
 
@@ -123,16 +119,54 @@ def cleanup_downloads(out_dir):
 
 
 def prune_old_data(data_dir, max_age_days):
-    """Delete data directories older than max_age_days."""
+    """Delete data dirs/tars older than max_age_days.
+
+    Age is taken from the YYYY-MM-DD prefix in the entry name, not the
+    filesystem ctime — dirs re-created by the tar-extraction fallback would
+    otherwise get fresh ctimes and never be pruned. Old .tar.gz backups are
+    pruned too, so the data dir cannot grow unbounded.
+    """
     if max_age_days <= 0:
         return
-    now = time.time()
-    cutoff = max_age_days * 86400
+    now = datetime.now()
+    cutoff = now - timedelta(days=max_age_days)
     for entry in data_dir.iterdir():
+        try:
+            entry_date = datetime.strptime(entry.name[:10], "%Y-%m-%d")
+        except ValueError:
+            continue
+        if entry_date >= cutoff:
+            continue
         if entry.is_dir():
-            age = now - entry.stat().st_ctime
-            if age > cutoff:
-                shutil.rmtree(entry)
+            shutil.rmtree(entry)
+            print(f"  pruned {entry.name}/")
+        elif entry.name.endswith(".tar.gz"):
+            entry.unlink(missing_ok=True)
+            print(f"  pruned {entry.name}")
+
+
+def upload_to_gdrive(tar_path, remote="fgdrive"):
+    """Upload a tar backup to the configured rclone remote.
+
+    Skips gracefully (keeping the local tar) when rclone or the remote is
+    not configured, instead of spamming a CRITICAL error every night.
+    """
+    try:
+        result = subprocess.run(
+            ["rclone", "listremotes"], capture_output=True, text=True, timeout=60
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        print(f"  rclone unavailable ({exc}); backup kept locally: {tar_path}")
+        return
+    remotes = {line.strip().rstrip(":") for line in result.stdout.splitlines()}
+    if remote not in remotes:
+        print(
+            f"  rclone remote '{remote}:' not configured — skipping upload; "
+            f"backup kept locally: {tar_path}"
+        )
+        return
+    print("Uploading to gdrive...")
+    subprocess.run(["rclone", "copy", str(tar_path), f"{remote}:/"])
 
 
 def main():
@@ -193,8 +227,7 @@ def main():
     if args.t:
         print("Testmode — skipping upload")
     elif not args.l:
-        print("Uploading to gdrive...")
-        subprocess.run(["rclone", "copy", str(tar_path), "fgdrive:/"])
+        upload_to_gdrive(tar_path)
 
     print("Finished!")
 

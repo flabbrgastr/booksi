@@ -23,6 +23,13 @@ def dfComprehend(dfnew):
         )
     ]
     # Group by Girl, Tel, and sid to avoid merging different profiles with same name
+    # Drop rows with missing group keys first (previously dropped silently by
+    # groupby's dropna), then coerce object columns to str so .max() never
+    # compares incompatible types (e.g. Fans as int 0 vs str "905", Purl None vs str).
+    dfnew = dfnew.dropna(subset=["Girl", "Tel", "sid"])
+    for col in dfnew.columns:
+        if col not in ("Girl", "Tel", "sid") and dfnew[col].dtype == object:
+            dfnew[col] = dfnew[col].fillna("").astype(str)
     dfnew = dfnew.groupby(["Girl", "Tel", "sid"], as_index=False).max()
 
     newnum = len(dfnew.index)
