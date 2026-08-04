@@ -10,6 +10,7 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from booksi import __version__
 from booksi.config import DATA_DIR, load_categories
 from rename import rename_jpgs
 
@@ -151,6 +152,7 @@ def main():
     parser.add_argument("-a", action="store_true", help="Anal categories only")
     parser.add_argument("-f", action="store_true", help="Keep local folder storage")
     parser.add_argument("-t", action="store_true", help="Test mode (skip 10 listings per page)")
+    parser.add_argument("-V", "--version", action="version", version=f"pyGals {__version__}")
     args = parser.parse_args()
 
     global variables
@@ -177,7 +179,7 @@ def main():
     if args.i:
         print("Include images")
 
-    print(f"Getting Gals on {datum}")
+    print(f"Getting Gals on {datum} (booksi {__version__})")
     print(categories)
     print()
 

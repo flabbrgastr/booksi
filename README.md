@@ -112,3 +112,15 @@ git fetch
 # Check available branches
 git branch -v -a
 ```
+
+## Versioning
+
+Single source of truth: `__version__` in `booksi/__init__.py`. `pyproject.toml`
+derives the package version from it (hatchling dynamic version), so there is
+exactly one place to bump.
+
+- `uv run python booksi.py -V` / `uv run python pyGals.py -V` print the version
+- releases are tagged `v<semver>` (e.g. `v0.1.0`)
+- the generated `all.html` shows the generating version in its footer
+- every nightly run stamps its version into `data/update.log`
+- `tests/test_version.py` keeps the string semver-shaped and visible from the CLIs/HTML

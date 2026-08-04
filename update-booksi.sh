@@ -9,6 +9,7 @@ cd /home/woodmastr/code/fg/booksi
 
 LOG=./data/update.log
 echo "=== $(date) ===" >> "$LOG"
+uv run python -c "from booksi import __version__; print(f'  booksi {__version__}')" >> "$LOG" 2>&1
 
 # Step 1: scrape new data, keep folder (-f) so booksi.py can read it
 echo "  scraping..." >> "$LOG"
