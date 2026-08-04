@@ -145,35 +145,10 @@ def prune_old_data(data_dir, max_age_days):
             print(f"  pruned {entry.name}")
 
 
-def upload_to_gdrive(tar_path, remote="fgdrive"):
-    """Upload a tar backup to the configured rclone remote.
-
-    Skips gracefully (keeping the local tar) when rclone or the remote is
-    not configured, instead of spamming a CRITICAL error every night.
-    """
-    try:
-        result = subprocess.run(
-            ["rclone", "listremotes"], capture_output=True, text=True, timeout=60
-        )
-    except (OSError, subprocess.TimeoutExpired) as exc:
-        print(f"  rclone unavailable ({exc}); backup kept locally: {tar_path}")
-        return
-    remotes = {line.strip().rstrip(":") for line in result.stdout.splitlines()}
-    if remote not in remotes:
-        print(
-            f"  rclone remote '{remote}:' not configured — skipping upload; "
-            f"backup kept locally: {tar_path}"
-        )
-        return
-    print("Uploading to gdrive...")
-    subprocess.run(["rclone", "copy", str(tar_path), f"{remote}:/"])
-
-
 def main():
     parser = argparse.ArgumentParser(description="Scrape listing pages from booksusi.com")
     parser.add_argument("-i", action="store_true", help="Include images")
     parser.add_argument("-a", action="store_true", help="Anal categories only")
-    parser.add_argument("-l", action="store_true", help="Keep local tar storage")
     parser.add_argument("-f", action="store_true", help="Keep local folder storage")
     parser.add_argument("-t", action="store_true", help="Test mode (skip 10 listings per page)")
     args = parser.parse_args()
@@ -217,17 +192,12 @@ def main():
 
     prune_old_data(data_dir, max_age_days)
 
-    # Tar and optionally upload
+    # Tar backup — kept locally (gdrive upload was deprecated)
     tar_path = data_dir / f"{datum}.tar.gz"
     subprocess.run(["tar", "-zcf", str(tar_path), str(out_dir)])
 
     if not args.f:
         shutil.rmtree(out_dir)
-
-    if args.t:
-        print("Testmode — skipping upload")
-    elif not args.l:
-        upload_to_gdrive(tar_path)
 
     print("Finished!")
 

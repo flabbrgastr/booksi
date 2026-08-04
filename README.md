@@ -36,8 +36,7 @@ uv run python pyGals.py
 uv run python pyGals.py -i    # Include images
 uv run python pyGals.py -a    # Anal only filtering
 uv run python pyGals.py -t    # Test mode (limits to 10 items)
-uv run python pyGals.py -l    # Local tar storage
-uv run python pyGals.py -f    # Local folder storage
+uv run python pyGals.py -f    # Keep local folder storage (tars always kept locally)
 ```
 
 ### Data Processing

@@ -31,8 +31,7 @@ python pyGals.py [options]
 # -h  Show help
 # -i  Include images
 # -a  Anal only filtering
-# -l  Local tar storage
-# -f  Local folder storage
+# -f  Keep local folder storage
 # -t  Test mode (limits to 10 items)
 ```
 
